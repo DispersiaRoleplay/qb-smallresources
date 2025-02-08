@@ -19,26 +19,41 @@ end
 exports('DecorSet', decorSet)
 
 CreateThread(function()
+    local densitySleep = 500 -- Density update rate
     while true do
+        local sleep = 100 -- Dynamic sleep
+        if isLoggedIn then
+            -- Turning off HUD components
+            for _, hud in ipairs(disableHudComponents) do
+                HideHudComponentThisFrame(hud)
+            end
 
-        for i = 1, #disableHudComponents do
-            HideHudComponentThisFrame(disableHudComponents[i])
+            -- Blocking the controls
+            for _, control in ipairs(disableControls) do
+                DisableControlAction(2, control, true)
+            end
+
+            -- Cartridge display
+            DisplayAmmoThisFrame(displayAmmo)
+
+            -- If it's time to update the transport/NPC density
+            if densitySleep <= 0 then
+                SetParkedVehicleDensityMultiplierThisFrame(Config.Density.parked)
+                SetVehicleDensityMultiplierThisFrame(Config.Density.vehicle)
+                SetRandomVehicleDensityMultiplierThisFrame(Config.Density.multiplier)
+                SetPedDensityMultiplierThisFrame(Config.Density.peds)
+                SetScenarioPedDensityMultiplierThisFrame(Config.Density.scenario, Config.Density.scenario)
+                densitySleep = 500 -- We update every 500 ms
+            end
+
+            sleep = 0 -- If the player is in the game, we reduce sleep
         end
 
-        for i = 1, #disableControls do
-            DisableControlAction(2, disableControls[i], true)
-        end
-
-        DisplayAmmoThisFrame(displayAmmo)
-
-        SetParkedVehicleDensityMultiplierThisFrame(Config.Density.parked)
-        SetVehicleDensityMultiplierThisFrame(Config.Density.vehicle)
-        SetRandomVehicleDensityMultiplierThisFrame(Config.Density.multiplier)
-        SetPedDensityMultiplierThisFrame(Config.Density.peds)
-        SetScenarioPedDensityMultiplierThisFrame(Config.Density.scenario, Config.Density.scenario) -- Walking NPC Density
-        Wait(0)
+        densitySleep = densitySleep - sleep -- Countdown to the next density update
+        Wait(sleep)
     end
 end)
+
 
 exports('addDisableHudComponents', function(hudComponents)
     local hudComponentsType = type(hudComponents)

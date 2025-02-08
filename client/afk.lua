@@ -39,33 +39,33 @@ RegisterNetEvent('QBCore:Client:OnPermissionUpdate', function()
 end)
 
 CreateThread(function()
+    local sleep = 10000 -- Dynamic sleep
     while true do
-        Wait(10000)
+        Wait(sleep)
+
         local ped = PlayerPedId()
-        if isLoggedIn == true or Config.AFK.kickInCharMenu == true then
+        if isLoggedIn or Config.AFK.kickInCharMenu then
             if checkUser then
                 local currPos = GetEntityCoords(ped, true)
-                if prevPos then
-                    if currPos == prevPos then
-                        if time then
-                            if time > 0 then
-                                local _type = timeMinutes[tostring(time)]
-                                if _type == 'minutes' then
-                                    QBCore.Functions.Notify(Lang:t('afk.will_kick') .. math.ceil(time / 60) .. Lang:t('afk.time_minutes'), 'error', 10000)
-                                elseif _type == 'seconds' then
-                                    QBCore.Functions.Notify(Lang:t('afk.will_kick') .. time .. Lang:t('afk.time_seconds'), 'error', 10000)
-                                end
-                                time -= 10
-                            else
-                                TriggerServerEvent('KickForAFK')
-                            end
-                        else
-                            time = Config.AFK.secondsUntilKick
+
+                -- We check the distance, not the equality of coordinates
+                if prevPos and #(currPos - prevPos) < 0.5 then 
+                    if time and time > 0 then
+                        local _type = timeMinutes[tostring(time)]
+                        if _type then
+                            local timeText = (_type == 'minutes') and (math.ceil(time / 60) .. Lang:t('afk.time_minutes')) or (time .. Lang:t('afk.time_seconds'))
+                            QBCore.Functions.Notify(Lang:t('afk.will_kick') .. timeText, 'error', 10000)
                         end
+                        time = time - 10
                     else
-                        time = Config.AFK.secondsUntilKick
+                        TriggerServerEvent('KickForAFK')
                     end
+                    sleep = 10000 -- AFK continues, we leave a check every 10 seconds
+                else
+                    time = Config.AFK.secondsUntilKick
+                    sleep = 30000 -- If the player is moving, we check less often (once every 30 seconds)
                 end
+
                 prevPos = currPos
             end
         end

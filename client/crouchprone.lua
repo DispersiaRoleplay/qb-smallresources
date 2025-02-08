@@ -27,28 +27,30 @@ RegisterNetEvent('crouchprone:client:SetWalkSet', function(clipset)
 end)
 
 CreateThread(function()
-    local sleep
+    local sleep, ped
     while true do
         sleep = 1000
-        local ped = PlayerPedId()
+        ped = PlayerPedId() -- We get only once per iteration
         DisableControlAction(0, 36, true)
+
         if not IsPedSittingInAnyVehicle(ped) and not IsPedFalling(ped) and not IsPedSwimming(ped) and not IsPedSwimmingUnderWater(ped) and not IsPauseMenuActive() then
-            sleep = 0
             if IsDisabledControlJustReleased(2, 36) then
+                sleep = 0
+                ClearPedTasks(ped)
+
                 if isCrouching then
-                    ClearPedTasks(ped)
                     resetAnimSet()
                     SetPedStealthMovement(ped, false, 'DEFAULT_ACTION')
-                    isCrouching = false
                 else
-                    ClearPedTasks(ped)
                     loadAnimSet('move_ped_crouched')
                     SetPedMovementClipset(ped, 'move_ped_crouched', 1.0)
                     SetPedStrafeClipset(ped, 'move_ped_crouched_strafing')
-                    isCrouching = true
                 end
+
+                isCrouching = not isCrouching
             end
         end
+
         Wait(sleep)
     end
 end)
