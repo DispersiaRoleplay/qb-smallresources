@@ -55,23 +55,22 @@ end
 
 function SeatBeltLoop()
     CreateThread(function()
-        while true do
-            sleep = 0
+        while IsPedInAnyVehicle(PlayerPedId(), false) do
             if seatbeltOn or harnessOn then
-                DisableControlAction(0, 75, true)
+                DisableControlAction(0, 75, true)  -- Disabling exit from the car
                 DisableControlAction(27, 75, true)
+                Wait(100)  -- It is enough to check every 100 ms
+            else
+                break  -- If the belt is not fastened, we exit the loop
             end
-            if not IsPedInAnyVehicle(PlayerPedId(), false) then
-                seatbeltOn = false
-                harnessOn = false
-                TriggerEvent("seatbelt:client:ToggleSeatbelt", seatbeltOn)
-                break
-            end
-            if not seatbeltOn and not harnessOn then break end
-            Wait(sleep)
         end
+        -- Reset the belt status after exiting the car
+        seatbeltOn = false
+        harnessOn = false
+        TriggerEvent("seatbelt:client:ToggleSeatbelt", false)
     end)
 end
+
 
 -- Export
 
